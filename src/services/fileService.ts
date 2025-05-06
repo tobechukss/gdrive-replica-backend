@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import cloudinary from '../utils/cloudinary';
 import { File, IFile } from '../models/fileModel';
 import { getFileCategory } from '../utils/fileUtils';
+import fs from 'fs';
 
 export const createFile = async (file: Express.Multer.File, uploadedBy: Types.ObjectId, parentFolder?: Types.ObjectId):Promise<{status: boolean, data:IFile, message: string}> => {
   if (file.size > 8 * 1024 * 1024) {
@@ -11,6 +12,12 @@ export const createFile = async (file: Express.Multer.File, uploadedBy: Types.Ob
   const uploadResult = await cloudinary.uploader.upload(file.path, {
     resource_type: 'auto',
     folder: 'file-storage-app'
+  });
+
+   // delete local file after upload
+   fs.unlink(file.path, (err) => {
+    if (err) console.error('Error deleting temp file:', err);
+    else console.log('Temp file deleted:', file.path);
   });
 
   const newFile = await File.create({
